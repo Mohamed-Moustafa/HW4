@@ -11,11 +11,15 @@ clear
 P1 = [1 0 1];
 P2 = [sqrt(2)/2 sqrt(2)/2 1.2];
 
-tf = 20;
+
 
 % No of points
 N = 300;
+delta_t=1/100;
+taw =  max(abs((P2-P1)/1));
+t1=1/10;
 
+tf= (floor(taw/delta_t)+1)*delta_t+t1;
 % time
 t = linspace(0,tf,N);
 
@@ -32,16 +36,21 @@ vz = ((P2(3)-P1(3))/tf);
 vel = [vx vy vz];
 
 
+
+
 Joint_config = zeros(3,N);
 Joint_vel = zeros(3,N);
+Test_jac= zeros(3,3,N);
 for joint = 1:N
     point_vec = [x(joint) y(joint) z(joint)];
     Joint_config(:,joint) = RRR_IK(point_vec);
     if joint == 1 || joint == N
         Joint_vel(:,joint) = 0;
+        
     else
         J = Jac_fn(Joint_config(:,joint));
         %inv(J)*vel
+        Test_jac(:,:,joint)=J(1:3,1:3);
         Joint_vel(:,joint) = J(1:3,1:3)\vel';
     end
 end
@@ -119,5 +128,12 @@ figure;
 plot(t,joints_acc(1,:),'b',t,joints_acc(2,:),'r',t,joints_acc(3,:),'m')
 grid on
 
-
+for i=1:length(Joint_config)
+   jac= Jac_fn(Joint_config(:,i));
+   car_vel(:,i)= jac(1:3,1:3) * Joint_vel(:,i);
+end
+hold off
+t=linspace(0,tf,N);
+figure; 
+plot( t,car_vel)
 
